@@ -1,0 +1,26 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /var/www/nodejs-app
+    overwrite: true # <--- ADD THIS LINE TO OVERWRITE FILES IN THE NODEJS APP DIRECTORY
+  - source: /client/build
+    destination: /var/www/html
+    overwrite: true # <--- It's good practice to add it here too, just in case /var/www/html also has conflicts.
+  - source: /nginx
+    destination: /etc/nginx/sites-available/
+    overwrite: true # <--- Also good practice for Nginx configs
+
+hooks:
+  BeforeInstall:
+    - location: server/scripts/install_dependencies.sh
+      timeout: 300
+      runas: root
+  AfterInstall:
+    - location: server/scripts/start_application.sh
+      timeout: 300
+      runas: root
+  ApplicationStop:
+    - location: server/scripts/stop_application.sh
+      timeout: 60
+      runas: root
