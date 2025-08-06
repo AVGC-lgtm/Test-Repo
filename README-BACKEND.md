@@ -251,3 +251,20 @@ For technical support or questions about the backend implementation, refer to:
 **APIs**: ✅ **ALL ENDPOINTS TESTED AND WORKING**
 **Authentication**: ✅ **SECURE AND ROLE-BASED**
 **Integration**: ✅ **FRONTEND FULLY INTEGRATED**
+
+## 🔀 Git: Push to `main` Branch
+
+If your default branch is `main` (not `master`), use these commands:
+
+```bash
+git add .
+git commit -m "Your commit message"
+git push origin main
+```
+
+If your local branch is not tracking `main`, set it with:
+
+```bash
+git branch -M main
+git push -u origin main
+```
