@@ -1,0 +1,21 @@
+model Inspection {
+  id                      String   @id @default(cuid())
+  dealerName              String
+  registrationNumber      String
+  samplingDate            String
+  fertilizerTypeGrade     String
+  batchNoManufactureDate  String
+  stockPosition           String
+  specificationFCO        String
+  compositionAnalysis     String
+  moisture                String?
+  totalN                  String?
+  totalP2O5               String?
+  totalK2O                String?
+  remarks                 String?
+  seen                    Boolean  @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@map("inspections")
+}
