@@ -1,0 +1,223 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  inspectionTasks InspectionTask[]
+  seizures        Seizure[]
+  labSamples      LabSample[]
+  firCases        FIRCase[]
+  auditLogs       AuditLog[]
+  accounts        Account[]
+  sessions        Session[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+model InspectionTask {
+  id         String   @id @default(cuid())
+  officer    String
+  date       String
+  location   String
+  targetType String
+  equipment  String[]
+  status     String   @default("scheduled")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  userId     String
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("inspection_tasks")
+}
+
+model Product {
+  id                       String   @id @default(cuid())
+  category                 String   // pesticides, fertilizers, seeds
+  company                  String
+  name                     String
+  activeIngredient         String?
+  composition              String?
+  packaging                String[]
+  batchFormat              String?
+  commonCounterfeitMarkers String[]
+  mrp                      Json?    // Store as JSON for flexible pricing
+  hologramFeatures         String[]
+  bagColor                 String?
+  subsidizedRate           Float?
+  varieties                String[]
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  // Relations
+  scanResults ScanResult[]
+
+  @@unique([category, company, name])
+  @@map("products")
+}
+
+model ScanResult {
+  id                String   @id @default(cuid())
+  company           String
+  product           String
+  batchNumber       String
+  authenticityScore Float
+  issues            String[]
+  recommendation    String
+  geoLocation       String
+  timestamp         String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  productId         String?
+
+  productRef Product? @relation(fields: [productId], references: [id])
+  seizures   Seizure[]
+
+  @@map("scan_results")
+}
+
+model Seizure {
+  id             String   @id @default(cuid())
+  quantity       String
+  estimatedValue String
+  witnessName    String
+  evidencePhotos String[]
+  videoEvidence  String?
+  status         String   @default("pending")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  userId         String
+  scanResultId   String
+
+  user       User       @relation(fields: [userId], references: [id])
+  scanResult ScanResult @relation(fields: [scanResultId], references: [id])
+  labSamples LabSample[]
+  firCases   FIRCase[]
+
+  @@map("seizures")
+}
+
+model LabSample {
+  id             String   @id @default(cuid())
+  sampleType     String
+  labDestination String
+  status         String   @default("in-transit")
+  labResult      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  userId         String
+  seizureId      String
+
+  user    User    @relation(fields: [userId], references: [id])
+  seizure Seizure @relation(fields: [seizureId], references: [id])
+  firCases FIRCase[]
+
+  @@map("lab_samples")
+}
+
+model FIRCase {
+  id           String   @id @default(cuid())
+  labReportId  String
+  violationType String
+  accused      String
+  location     String
+  status       String   @default("draft")
+  caseNotes    String?
+  courtDate    String?
+  outcome      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  userId       String
+  seizureId    String?
+  labSampleId  String?
+
+  user      User       @relation(fields: [userId], references: [id])
+  seizure   Seizure?   @relation(fields: [seizureId], references: [id])
+  labSample LabSample? @relation(fields: [labSampleId], references: [id])
+
+  @@map("fir_cases")
+}
+
+model File {
+  id        String   @id @default(cuid())
+  filename  String
+  originalName String
+  mimetype  String
+  size      Int
+  path      String
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("files")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String
+  oldData   Json?
+  newData   Json?
+  createdAt DateTime @default(now())
+  userId    String
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
